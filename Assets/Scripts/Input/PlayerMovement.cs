@@ -25,12 +25,12 @@ public class PlayerMovement : MonoBehaviour
 
     private Vector3 playerMovement;
     private Rigidbody rigididbody;
-    private Animator animator;
+    [SerializeField] private Animator animator;
+    private const string horizontal =  "Horizontal";
 
     void Awake()
     {
         rigididbody = GetComponent<Rigidbody>();
-        animator = GetComponent<Animator>();
     }
 
     void Update()
@@ -58,7 +58,7 @@ public class PlayerMovement : MonoBehaviour
         playerMovement.Set(InputManager.playerMovement.x, 0, 0);
         rigididbody.velocity = new Vector2(playerMovement.x * moveSpeed, GetComponent<Rigidbody>().velocity.y);
 
-        animator.SetFloat("Horizontal", playerMovement.x);
+        animator.SetFloat(horizontal, playerMovement.x);
 
         if (playerMovement.x != 0)
         {
