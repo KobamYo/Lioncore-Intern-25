@@ -31,10 +31,12 @@ public class ComboSystem : MonoBehaviour
 
         canAttack = false;
 
+        animator.SetInteger("Combo Index", comboIndex);
+
         switch (comboIndex)
         {
             case 0:
-                comboIndex = 1;
+                comboIndex = 1; 
                 break;
             case 1:
                 comboIndex = 2;
@@ -75,6 +77,11 @@ public class ComboSystem : MonoBehaviour
         if (!attackInputBuffered)
         {
             ResetCombo();
+        }
+        else
+        {
+            attackInputBuffered = false;
+            PerformCombo();
         }
     }
 
