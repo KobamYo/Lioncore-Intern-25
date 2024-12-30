@@ -6,7 +6,7 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] AudioSource walkAudio;
+    [SerializeField] private AudioSource walkAudio;
 
     [Header("Dash Settings")]
     [SerializeField] private float dashSpeed = 15f;
@@ -14,6 +14,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float dashCooldown = 1f;
     private bool isDashing = false;
     private float lastDashTime = -Mathf.Infinity;
+
+    [Header("Crouch Settings")]
+    private bool isCrouching = false;
 
     [Header("Jump Settings")]
     [SerializeField] private float jumpForce = 10f;
@@ -24,74 +27,107 @@ public class PlayerMovement : MonoBehaviour
     private bool isGrounded;
 
     private Vector3 playerMovement;
-    private Rigidbody rigididbody;
+    private Rigidbody rigidbody;
     [SerializeField] private Animator animator;
-    private const string horizontal =  "Horizontal";
+    [SerializeField] private SpriteRenderer spriteRenderer;
+    private const string RunSpeedParam = "Run Speed";
+    private const string IsCrouchingParam = "Is Crouching";
+    private const string IsJumpingParam = "Is Jumping";
+    private const string IsFallingParam = "Is Falling";
+    private const string IsLandingParam = "Is Landing";
 
     void Awake()
     {
-        rigididbody = GetComponent<Rigidbody>();
+        rigidbody = GetComponent<Rigidbody>();
     }
 
     void Update()
     {
-        if (!isDashing)
+        isGrounded = CheckIfGrounded();
+
+        if (!isDashing && !isCrouching)
         {
-            MovePlayer();
+            HandleMovement();
         }
 
-        isGrounded = IsGrounded();
+        HandleJumpFallLand();
 
-        if (InputManager.playerJump && isGrounded)
+        if (InputManager.playerJump && isGrounded && !isCrouching)
         {
-            JumpPlayer();
+            PerformJump();
         }
 
-        if (InputManager.playerDash && Time.time >= lastDashTime + dashCooldown)
+        if (InputManager.playerDash && Time.time >= lastDashTime + dashCooldown && !isCrouching)
         {
-            StartCoroutine(Dash());
+            StartCoroutine(PerformDash());
         }
+
+        HandleCrouch(InputManager.playerCrouch);
     }
 
-    private void MovePlayer()
+    private void HandleMovement()
     {
-        playerMovement.Set(InputManager.playerMovement.x, 0, 0);
-        rigididbody.velocity = new Vector2(playerMovement.x * moveSpeed, GetComponent<Rigidbody>().velocity.y);
+        playerMovement = InputManager.playerMovement;
+        rigidbody.velocity = new Vector2(playerMovement.x * moveSpeed, rigidbody.velocity.y);
 
-        animator.SetFloat(horizontal, playerMovement.x);
+        animator.SetFloat(RunSpeedParam, Mathf.Abs(playerMovement.x));
 
         if (playerMovement.x != 0)
         {
+            spriteRenderer.flipX = playerMovement.x < 0;
+
             if (!walkAudio.isPlaying)
             {
                 walkAudio.Play();
             }
         }
-        else
+        else if (walkAudio.isPlaying)
         {
-            if (walkAudio.isPlaying)
-            {
-                walkAudio.Stop();
-            }
+            walkAudio.Stop();
         }
     }
 
-    private IEnumerator Dash()
+    private IEnumerator PerformDash()
     {
         isDashing = true;
         lastDashTime = Time.time;
 
-        Vector3 dashDirection = new Vector3(InputManager.playerMovement.x, 0, 0).normalized;
-        rigididbody.velocity = dashDirection * dashSpeed;
+        Vector3 dashDirection = new Vector3(playerMovement.x, 0, 0).normalized;
+        rigidbody.velocity = dashDirection * dashSpeed;
 
         yield return new WaitForSeconds(dashDuration);
         isDashing = false;
     }
 
-    private bool IsGrounded()
+    private void HandleCrouch(bool isCrouchingInput)
+    {
+        if (isCrouchingInput && !isCrouching)
+        {
+            StartCrouch();
+        }
+        else if (!isCrouchingInput && isCrouching)
+        {
+            StopCrouch();
+        }
+    }
+
+    private void StartCrouch()
+    {
+        isCrouching = true;
+        animator.SetBool(IsCrouchingParam, true);
+        rigidbody.velocity = Vector2.zero;
+    }
+
+    private void StopCrouch()
+    {
+        isCrouching = false;
+        animator.SetBool(IsCrouchingParam, false);
+    }
+
+    private bool CheckIfGrounded()
     {
         bool groundCheckHit = Physics.OverlapSphere(groundCheck.position, groundCheckRadius, groundLayer).Length > 0;
-    
+
         RaycastHit raycastHit;
         bool rayHit = Physics.Raycast(groundCheck.position, Vector3.down, out raycastHit, raycastDistance, groundLayer);
         Debug.DrawRay(groundCheck.position, Vector3.down * raycastDistance, Color.red);
@@ -99,9 +135,28 @@ public class PlayerMovement : MonoBehaviour
         return groundCheckHit || rayHit;
     }
 
-    private void JumpPlayer()
+    private void PerformJump()
     {
-        GetComponent<Rigidbody>().velocity = new Vector3(GetComponent<Rigidbody>().velocity.x, jumpForce, 0);
+        rigidbody.velocity = new Vector2(rigidbody.velocity.x, jumpForce);
+        animator.SetBool(IsJumpingParam, true);
+    }
+
+    private void HandleJumpFallLand()
+    {
+        float verticalVelocity = rigidbody.velocity.y;
+
+        if (!isGrounded)
+        {
+            animator.SetBool(IsJumpingParam, verticalVelocity > 0);
+            animator.SetBool(IsFallingParam, verticalVelocity < 0);
+            animator.SetBool(IsLandingParam, false);
+        }
+        else
+        {
+            animator.SetBool(IsJumpingParam, false);
+            animator.SetBool(IsFallingParam, false);
+            animator.SetBool(IsLandingParam, Mathf.Abs(verticalVelocity) < 0.1f);
+        }
     }
 
     void OnDrawGizmosSelected()

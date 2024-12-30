@@ -8,13 +8,15 @@ public class InputManager : MonoBehaviour
     public static Vector2 playerMovement;
     public static bool playerJump;
     public static bool playerDash;
+    public static bool playerCrouch;
     public static bool playerCombat;
 
     private PlayerInput playerInput;
     private InputAction moveAction;
     private InputAction jumpAction;
     private InputAction dashAction;
-    private InputAction combatAction;
+    private InputAction crouchAction;
+    private InputAction attackAction;
 
     void Awake()
     {
@@ -22,7 +24,8 @@ public class InputManager : MonoBehaviour
         moveAction = playerInput.actions["Move"];
         jumpAction = playerInput.actions["Jump"];
         dashAction = playerInput.actions["Dash"];
-        combatAction = playerInput.actions["Combat"];
+        crouchAction = playerInput.actions["Crouch"];
+        attackAction = playerInput.actions["Combat"];
     }
 
     void Update()
@@ -30,6 +33,7 @@ public class InputManager : MonoBehaviour
         playerMovement = moveAction.ReadValue<Vector2>();
         playerJump = jumpAction.triggered;
         playerDash = dashAction.triggered;
-        playerCombat = combatAction.triggered;
+        playerCrouch = crouchAction.ReadValue<float>() > 0;
+        playerCombat = attackAction.triggered;
     }
 }
