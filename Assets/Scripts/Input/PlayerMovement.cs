@@ -26,8 +26,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float raycastDistance = 0.3f;
     private bool isGrounded;
 
+    public Rigidbody rigidbody;
     private Vector3 playerMovement;
-    private Rigidbody rigidbody;
     [SerializeField] private Animator animator;
     [SerializeField] private SpriteRenderer spriteRenderer;
     private const string RunSpeedParam = "Run Speed";
@@ -124,7 +124,7 @@ public class PlayerMovement : MonoBehaviour
         animator.SetBool(IsCrouchingParam, false);
     }
 
-    private bool CheckIfGrounded()
+    public bool CheckIfGrounded()
     {
         bool groundCheckHit = Physics.OverlapSphere(groundCheck.position, groundCheckRadius, groundLayer).Length > 0;
 
