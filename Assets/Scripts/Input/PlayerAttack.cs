@@ -5,14 +5,18 @@ using UnityEngine;
 public class PlayerAttack : MonoBehaviour
 {
     [Header("Attack Settings")]
-    [SerializeField] private Animator animator;
     [SerializeField] private PlayerMovement playerMovement;
-
-    private const string RegularAttackTrigger = "Regular Attack";
-    private const string CrouchAttackTrigger = "Crouch Attack";
-    private const string AirAttackTrigger = "Air Attack";
-
+    [SerializeField] private float attackDelay = 0.3f;
     private bool canAttack = true;
+
+    [SerializeField] private Animator animator;
+    private string currentAnimation;
+
+    // Animation States
+    private const string PLAYER_IDLE = "Player_Idle";
+    private const string PLAYER_ATTACK_STANDING = "Player_AttackStanding";
+    private const string PLAYER_ATTACK_CROUCH = "Player_AttackCrouch";
+    private const string PLAYER_ATTACK_AIR = "Player_AttackAir";
 
     void Update()
     {
@@ -26,51 +30,39 @@ public class PlayerAttack : MonoBehaviour
     {
         if (InputManager.playerCrouch && playerMovement.CheckIfGrounded())
         {
-            PerformCrouchingAttack();
+            PerformAttack(PLAYER_ATTACK_CROUCH, false);
         }
         else if (!playerMovement.CheckIfGrounded())
         {
-            PerformAirAttack();
+            PerformAttack(PLAYER_ATTACK_AIR, false);
         }
         else
         {
-            PerformRegularAttack();
+            PerformAttack(PLAYER_ATTACK_STANDING, true);
         }
     }
 
-    private void PerformRegularAttack()
+    private void PerformAttack(string animationState, bool enableMovementAfter)
     {
         canAttack = false;
 
-        playerMovement.enabled = false;
-        playerMovement.rigidbody.velocity = Vector2.zero;
-        animator.SetFloat("Run Speed", 0f);
+        if (enableMovementAfter)
+        {
+            playerMovement.enabled = false;
+            playerMovement.rigidbody.velocity = Vector2.zero;
+            animator.SetFloat("Run Speed", 0f);
+        }
 
-        animator.ResetTrigger(RegularAttackTrigger);
-        animator.SetTrigger(RegularAttackTrigger);
-
-        StartCoroutine(WaitForAnimation(true));
+        PlayAnimation(animationState);
+        StartCoroutine(WaitForAnimation(enableMovementAfter));
     }
 
-    private void PerformCrouchingAttack()
+    private void PlayAnimation(string newAnimation)
     {
-        canAttack = false;
+        if (currentAnimation == newAnimation) return;
 
-        animator.ResetTrigger(CrouchAttackTrigger);
-        animator.ResetTrigger(RegularAttackTrigger);
-        animator.SetTrigger(CrouchAttackTrigger);
-
-        StartCoroutine(WaitForAnimation(false));
-    }
-
-    private void PerformAirAttack()
-    {
-        canAttack = false;
-
-        animator.ResetTrigger(AirAttackTrigger);
-        animator.SetTrigger(AirAttackTrigger);
-
-        StartCoroutine(WaitForAnimation(false));
+        animator.Play(newAnimation);
+        currentAnimation = newAnimation;
     }
 
     private IEnumerator WaitForAnimation(bool enableMovement)
@@ -82,5 +74,8 @@ public class PlayerAttack : MonoBehaviour
             playerMovement.enabled = true;
         }
         canAttack = true;
+
+        // Transition back to Idle animation after attack finishes
+        PlayAnimation(PLAYER_IDLE);
     }
 }

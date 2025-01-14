@@ -433,8 +433,8 @@ MonoBehaviour:
   groundCheckRadius: 0.2
   raycastDistance: 0.3
   rigidbody: {fileID: 0}
-  animator: {fileID: 596719410}
   spriteRenderer: {fileID: 596719409}
+  animator: {fileID: 596719410}
 --- !u!114 &229227035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -540,8 +540,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6d5151db85746e4380e8c657726af34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 596719410}
   playerMovement: {fileID: 229227034}
+  attackDelay: 0.3
+  animator: {fileID: 596719410}
 --- !u!1 &308497734
 GameObject:
   m_ObjectHideFlags: 0
@@ -852,7 +853,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.024976611, y: -0.000000017201012, z: 4.2975712e-10, w: 0.999688}
+  m_LocalRotation: {x: 0.02497659, y: 0.000000017201012, z: -4.2975679e-10, w: 0.999688}
   m_LocalPosition: {x: 0, y: 2.63, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1341,7 +1342,7 @@ Animator:
   m_GameObject: {fileID: 596719407}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: b72343106e1d5f04c85cecf9492a8d80, type: 2}
+  m_Controller: {fileID: 9100000, guid: e850ed644891ce644842e9719c539c02, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -2303,7 +2304,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1425476750}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.024976611, y: -0.000000017201012, z: 4.2975712e-10, w: 0.999688}
+  m_LocalRotation: {x: 0.02497659, y: 0.000000017201012, z: -4.2975679e-10, w: 0.999688}
   m_LocalPosition: {x: 0, y: 2.63, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

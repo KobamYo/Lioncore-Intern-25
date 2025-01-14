@@ -25,16 +25,25 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float groundCheckRadius = 0.2f;
     [SerializeField] private float raycastDistance = 0.3f;
     private bool isGrounded;
+    private bool isLanding = false;
 
     public Rigidbody rigidbody;
     private Vector3 playerMovement;
-    [SerializeField] private Animator animator;
+
     [SerializeField] private SpriteRenderer spriteRenderer;
-    private const string RunSpeedParam = "Run Speed";
-    private const string IsCrouchingParam = "Is Crouching";
-    private const string IsJumpingParam = "Is Jumping";
-    private const string IsFallingParam = "Is Falling";
-    private const string IsLandingParam = "Is Landing";
+    [SerializeField] private Animator animator;
+    private string currentAnimation;
+
+    // Animation States
+    private const string PLAYER_IDLE = "Player_Idle";
+    private const string PLAYER_RUN = "Player_Run";
+    private const string PLAYER_RUN_END = "Player_RunEnd";
+    private const string PLAYER_CROUCH = "Player_Crouch";
+    private const string PLAYER_CROUCH_END = "Player_CrouchEnd";
+    private const string PLAYER_JUMP = "Player_Jump";
+    private const string PLAYER_FALL = "Player_Fall";
+    private const string PLAYER_LAND = "Player_Land";
+    private const string PLAYER_DASH = "Player_Dash";
 
     void Awake()
     {
@@ -45,12 +54,15 @@ public class PlayerMovement : MonoBehaviour
     {
         isGrounded = CheckIfGrounded();
 
-        if (!isDashing && !isCrouching)
+        if (isDashing)
         {
-            HandleMovement();
+            PlayAnimation(PLAYER_DASH);
+            return;
         }
 
         HandleJumpFallLand();
+        HandleCrouch(InputManager.playerCrouch);
+        HandleMovement();
 
         if (InputManager.playerJump && isGrounded && !isCrouching)
         {
@@ -61,8 +73,6 @@ public class PlayerMovement : MonoBehaviour
         {
             StartCoroutine(PerformDash());
         }
-
-        HandleCrouch(InputManager.playerCrouch);
     }
 
     private void HandleMovement()
@@ -70,20 +80,24 @@ public class PlayerMovement : MonoBehaviour
         playerMovement = InputManager.playerMovement;
         rigidbody.velocity = new Vector2(playerMovement.x * moveSpeed, rigidbody.velocity.y);
 
-        animator.SetFloat(RunSpeedParam, Mathf.Abs(playerMovement.x));
-
-        if (playerMovement.x != 0)
+        if (playerMovement.x != 0 && isGrounded)
         {
             spriteRenderer.flipX = playerMovement.x < 0;
+            PlayAnimation(PLAYER_RUN);
 
             if (!walkAudio.isPlaying)
             {
                 walkAudio.Play();
             }
         }
-        else if (walkAudio.isPlaying)
+        else if (isGrounded)
         {
-            walkAudio.Stop();
+            PlayAnimation(PLAYER_IDLE);
+
+            if (walkAudio.isPlaying)
+            {
+                walkAudio.Stop();
+            }
         }
     }
 
@@ -103,25 +117,15 @@ public class PlayerMovement : MonoBehaviour
     {
         if (isCrouchingInput && !isCrouching)
         {
-            StartCrouch();
+            isCrouching = true;
+            PlayAnimation(PLAYER_CROUCH);
+            rigidbody.velocity = Vector2.zero;
         }
         else if (!isCrouchingInput && isCrouching)
         {
-            StopCrouch();
+            isCrouching = false;
+            PlayAnimation(PLAYER_CROUCH_END);
         }
-    }
-
-    private void StartCrouch()
-    {
-        isCrouching = true;
-        animator.SetBool(IsCrouchingParam, true);
-        rigidbody.velocity = Vector2.zero;
-    }
-
-    private void StopCrouch()
-    {
-        isCrouching = false;
-        animator.SetBool(IsCrouchingParam, false);
     }
 
     public bool CheckIfGrounded()
@@ -138,7 +142,7 @@ public class PlayerMovement : MonoBehaviour
     private void PerformJump()
     {
         rigidbody.velocity = new Vector2(rigidbody.velocity.x, jumpForce);
-        animator.SetBool(IsJumpingParam, true);
+        PlayAnimation(PLAYER_JUMP);
     }
 
     private void HandleJumpFallLand()
@@ -147,16 +151,34 @@ public class PlayerMovement : MonoBehaviour
 
         if (!isGrounded)
         {
-            animator.SetBool(IsJumpingParam, verticalVelocity > 0);
-            animator.SetBool(IsFallingParam, verticalVelocity < 0);
-            animator.SetBool(IsLandingParam, false);
+            if (verticalVelocity > 0)
+            {
+                PlayAnimation(PLAYER_JUMP);
+            }
+            else
+            {
+                PlayAnimation(PLAYER_FALL);
+            }
         }
-        else
+        else if (isLanding == false && Mathf.Abs(verticalVelocity) < 0.1f)
         {
-            animator.SetBool(IsJumpingParam, false);
-            animator.SetBool(IsFallingParam, false);
-            animator.SetBool(IsLandingParam, Mathf.Abs(verticalVelocity) < 0.1f);
+            StartCoroutine(PlayLandAnimation());
         }
+    }
+
+    private IEnumerator PlayLandAnimation()
+    {
+        isLanding = true;
+        PlayAnimation(PLAYER_LAND);
+        yield return new WaitForSeconds(0.2f);
+        isLanding = false;
+    }
+
+    private void PlayAnimation(string newAnimation)
+    {
+        if (currentAnimation == newAnimation || isLanding && newAnimation != PLAYER_LAND) return;
+        animator.Play(newAnimation);
+        currentAnimation = newAnimation;
     }
 
     void OnDrawGizmosSelected()
