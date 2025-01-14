@@ -42,13 +42,14 @@ public class PlayerAttack : MonoBehaviour
     {
         canAttack = false;
 
+        playerMovement.enabled = false;
         playerMovement.rigidbody.velocity = Vector2.zero;
         animator.SetFloat("Run Speed", 0f);
 
         animator.ResetTrigger(RegularAttackTrigger);
         animator.SetTrigger(RegularAttackTrigger);
 
-        StartCoroutine(WaitForAnimation());
+        StartCoroutine(WaitForAnimation(true));
     }
 
     private void PerformCrouchingAttack()
@@ -59,7 +60,7 @@ public class PlayerAttack : MonoBehaviour
         animator.ResetTrigger(RegularAttackTrigger);
         animator.SetTrigger(CrouchAttackTrigger);
 
-        StartCoroutine(WaitForAnimation());
+        StartCoroutine(WaitForAnimation(false));
     }
 
     private void PerformAirAttack()
@@ -69,12 +70,17 @@ public class PlayerAttack : MonoBehaviour
         animator.ResetTrigger(AirAttackTrigger);
         animator.SetTrigger(AirAttackTrigger);
 
-        StartCoroutine(WaitForAnimation());
+        StartCoroutine(WaitForAnimation(false));
     }
 
-    private IEnumerator WaitForAnimation()
+    private IEnumerator WaitForAnimation(bool enableMovement)
     {
         yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length);
+
+        if (enableMovement)
+        {
+            playerMovement.enabled = true;
+        }
         canAttack = true;
     }
 }
